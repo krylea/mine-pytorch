@@ -23,46 +23,49 @@ lr = 1e-4
 epochs = 200
 batch_size = 500
 
-steps = 15
 rhos = np.array([-0.99,-0.9,-0.7,-0.5,-0.3,-0.1,0,0.1,0.3,0.5,0.7,0.9,0.99])
 loss_type = ['mine_biased']
 
 results_dict = dict()
 
-for loss in loss_type:
-    results = []
-    for rho in rhos:
-        train_loader = torch.utils.data.DataLoader(
-        MultivariateNormalDataset(N, dim, rho), batch_size=batch_size, shuffle=True)
-        test_loader = torch.utils.data.DataLoader(
-        MultivariateNormalDataset(N, dim, rho), batch_size=batch_size, shuffle=True)
+#for loss in loss_type:
+mi_model=[]
+mi_true=[]
+for rho in rhos:
+    train_loader = torch.utils.data.DataLoader(
+    MultivariateNormalDataset(N, dim, rho), batch_size=batch_size, shuffle=True)
+    test_loader = torch.utils.data.DataLoader(
+    MultivariateNormalDataset(N, dim, rho), batch_size=batch_size, shuffle=True)
 
-        
-        true_mi = train_loader.dataset.true_mi
+    
+    true_mi = train_loader.dataset.true_mi
 
-        kwargs = {
-            'lr': lr,
-            'batch_size': batch_size,
-            'train_loader': train_loader,
-            'test_loader': test_loader,
-            'alpha': 1.0
-        }
+    kwargs = {
+        'lr': lr,
+        'batch_size': batch_size,
+        'train_loader': train_loader,
+        'test_loader': test_loader,
+        'alpha': 1.0
+    }
 
-        model = MutualInformationEstimator(
-            dim, dim, loss=loss, **kwargs).to(device)
-        
-        trainer = Trainer(max_epochs=epochs, early_stop_callback=False, gpus=num_gpus)
-        trainer.fit(model)
-        trainer.test()
+    model = MutualInformationEstimator(
+        dim, dim, loss='mine_biased', **kwargs).to(device)
+    
+    trainer = Trainer(max_epochs=epochs, early_stop_callback=False, gpus=num_gpus)
+    trainer.fit(model)
+    trainer.test()
 
-        print("True_mi {}".format(true_mi))
-        print("MINE {}".format(model.avg_test_mi))
-        results.append((rho, model.avg_test_mi, true_mi))
-
-    results = np.array(results)
-    results_dict[loss] = results
+    print("True_mi {}".format(true_mi))
+    print("MINE {}".format(model.avg_test_mi))
+    mi_model.append(model.avg_test_mi)
+    mi_true.append(true_mi)
 
 
+torch.save({'rho':rhos, 'true':mi_true, 'mine':mi_model}, "mine_rho_%d.pt" % dim)
+
+
+
+'''
 fig, axs = plt.subplots(1, len(loss_type), sharex = True, figsize = (6,4))
 plots = []
 for ix, loss in enumerate(loss_type):
@@ -75,3 +78,4 @@ for ix, loss in enumerate(loss_type):
     
 fig.legend(plots[0:2], labels = ['MINE', 'True MI'], loc='upper right')
 fig.savefig('figures/mi_estimation.png')
+'''
