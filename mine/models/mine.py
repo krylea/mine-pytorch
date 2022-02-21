@@ -143,11 +143,11 @@ class T(nn.Module):
 
 
 class MutualInformationEstimator(pl.LightningModule):
-    def __init__(self, x_dim, z_dim, loss='mine', **kwargs):
+    def __init__(self, x_dim, z_dim, hs=100, loss='mine', **kwargs):
         super().__init__()
         self.x_dim = x_dim
-        self.T = CustomSequential(ConcatLayer(), nn.Linear(x_dim + z_dim, 100), nn.ReLU(),
-                                  nn.Linear(100, 100), nn.ReLU(), nn.Linear(100, 1))
+        self.T = CustomSequential(ConcatLayer(), nn.Linear(x_dim + z_dim, hs), nn.ReLU(),
+                                  nn.Linear(hs, hs), nn.ReLU(), nn.Linear(hs, 1))
 
         self.energy_loss = Mine(self.T, loss=loss, alpha=kwargs['alpha'])
 

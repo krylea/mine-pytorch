@@ -79,3 +79,6 @@ for ix, loss in enumerate(loss_type):
 fig.legend(plots[0:2], labels = ['MINE', 'True MI'], loc='upper right')
 fig.savefig('figures/mi_estimation.png')
 '''
+
+
+
